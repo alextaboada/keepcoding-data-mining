@@ -108,6 +108,7 @@ for (barrio in barrios) {
     cat(sprintf("------Barrio %s borrado\n",barrio))
   }
 }
+summary(df_madrid)
 ```
 
 ------------------------------------------------------------------------
@@ -176,23 +177,84 @@ print(df_madrid)
 
 ------------------------------------------------------------------------
 
-12. Vamos a crear dos grupos, uno test y otro train.
+12. Vamos a crear dos grupos, uno test y otro
+
+```{r}
+set.seed(12)
+idx<-sample(1:nrow(df_madrid),nrow(df_madrid)*0.7)
+train.df<-df_madrid[idx,]
+test.df<-df_madrid[-idx,]
+train.df <- train.df |> select(!c(Neighbourhood,Square.Feet))
+test.df <- test.df |> select(!c(Neighbourhood,Square.Feet))
+print("Valores para train:")
+nrow(train.df)
+print("Valores para test:")
+nrow(test.df)
+```
 
 ------------------------------------------------------------------------
 
-13. Tratamos de predecir los metros cuadrados en función del resto de columnas del dataframe.
+13. Tratamos de predecir los metros cuadrados en función del resto de columnas del
+
+```{r}
+#Modelo de regresion lineal para todas las variables
+modelo1 <-lm(data=train.df, formula=Square.Meters~.)
+summary(modelo1)
+```
+
+```{r}
+#Probamos quitando longitud y latitud
+{modelo2 <-lm(data=train.df, formula=Square.Meters~.-Latitude -Longitude )}
+summary(modelo2)
+```
+
+```{r}
+print("Como el primer modelo tiene mas R cuadrado, nos quedamos con ese modelo")
+```
 
 ------------------------------------------------------------------------
 
 14. Mirad el histograma de los residuos sobre el conjunto de test para evaluar la calidad de vuestro modelo
 
+```{r}
+residuo1 <- residuals(modelo1,newdata = test.df)
+hist(residuo1,breaks = 20)
+plot(residuo1)
+residuo2 <- residuals(modelo2,newdata = test.df)
+hist(residuo2, breaks=20)
+plot(residuo2)
+```
+
 ------------------------------------------------------------------------
 
 15. Si tuvieramos un anuncio de un apartamento para 6 personas (Accommodates), con 1 baño, con un precio de 80€/noche y 3 habitaciones en el barrio de Sol, con 3 camas y un review de 80. ¿Cuantos metros cuadrados tendría? Si tu modelo necesita algúna variable adicional puedes inventartela dentro del rango de valores del dataset. ¿Como varía sus metros cuadrados con cada habitación adicional?
 
+```{r}
+simulados <- data.frame(
+  Accommodates = 1,
+  Bathrooms = 1,
+  Bedrooms = 3,
+  Price = 80,
+  Beds = 3,
+  Guests.Included = 6,
+  Extra.People = 0,
+  Review.Scores.Rating = 80,
+  Latitude = mean(df_madrid$Latitude,na.rm = TRUE),
+  Longitude = mean(df_madrid$Longitude,na.rm = TRUE),
+  neighb_id = 2
+)
+prediccion <- predict(modelo1,simulados,type="response")
+prediccion
+```
+
 ------------------------------------------------------------------------
 
 16. Rellenar los Square.Meters con valor NA con el estimado con el modelo anterior.
+```{r}
+df_madrid2 <- df_madrid
+df_madrid2[is.na(df_madrid2$Square.Meters),"Square.Meters"] <- predict(modelo1, (df_madrid[is.na(df_madrid$Square.Meters),]))
+summary(df_madrid2)
+```
 
 ------------------------------------------------------------------------
 
