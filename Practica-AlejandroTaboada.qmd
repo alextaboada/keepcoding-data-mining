@@ -251,9 +251,8 @@ prediccion
 
 16. Rellenar los Square.Meters con valor NA con el estimado con el modelo anterior.
 ```{r}
-df_madrid2 <- df_madrid
-df_madrid2[is.na(df_madrid2$Square.Meters),"Square.Meters"] <- predict(modelo1, (df_madrid[is.na(df_madrid$Square.Meters),]))
-summary(df_madrid2)
+df_madrid[is.na(df_madrid$Square.Meters),"Square.Meters"] <- predict(modelo1, (df_madrid[is.na(df_madrid$Square.Meters),]))
+summary(df_madrid)
 ```
 
 ------------------------------------------------------------------------
